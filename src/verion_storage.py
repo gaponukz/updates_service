@@ -8,7 +8,7 @@ class VersionStorage:
     def __init__(self, filename: str):
         self._filename = filename
     
-    def create(self, version: entities.Version):
+    def create(self, version: entities.Build):
         with open(self._filename, 'a') as file:
             data = {
                 'version': version.version,
@@ -17,13 +17,13 @@ class VersionStorage:
             }
             file.write(json.dumps(data) + '\n')
     
-    def get_all(self) -> list[entities.Version]:
+    def get_all(self) -> list[entities.Build]:
         all = []
         
         with open(self._filename, 'r') as file:
             for line in file:
                 data = json.loads(line)
-                version = entities.Version(
+                version = entities.Build(
                     version=versions.VersionSymbol(data['version']),
                     file_path=data['file_path'],
                     created_at=datetime.datetime.fromisoformat(data['created_at']).replace(tzinfo=datetime.timezone.utc),
