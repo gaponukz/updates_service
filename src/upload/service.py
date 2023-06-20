@@ -2,10 +2,9 @@ import typing
 import aiofiles
 
 from src import entities
-from src import versions
 
 class CreateAbleStorage(typing.Protocol):
-    def create(self, version: entities.Build): ...
+    def create(self, build: entities.Build): ...
 
 class File(typing.Protocol):
     def read(self) -> typing.Coroutine[object, object, bytes]: ...
@@ -18,7 +17,7 @@ class UploadService:
         self.storage = storage
         self._folder_path = folder_path
     
-    async def add(self, file: File, version: versions.Version):
+    async def add(self, file: File, version: entities.Version):
         file_path = f"{self._folder_path}/{file.filename}"
 
         async with aiofiles.open(file_path, 'wb') as out_file:

@@ -1,10 +1,9 @@
-from src import versions
 from src import entities
 
 import json
 import datetime
 
-class VersionStorage:
+class BuildsStorage:
     def __init__(self, filename: str):
         self._filename = filename
     
@@ -24,7 +23,7 @@ class VersionStorage:
             for line in file:
                 data = json.loads(line)
                 version = entities.Build(
-                    version=versions.VersionSymbol(data['version']),
+                    version=entities.VersionSymbol(data['version']),
                     file_path=data['file_path'],
                     created_at=datetime.datetime.fromisoformat(data['created_at']).replace(tzinfo=datetime.timezone.utc),
                 )
@@ -32,7 +31,7 @@ class VersionStorage:
 
         return all
     
-    def delete_by_symbol(self, version: versions.VersionSymbol):
+    def delete_by_symbol(self, version: entities.VersionSymbol):
         lines = []
         with open(self._filename, 'r') as file:
             for line in file:

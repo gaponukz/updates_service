@@ -1,7 +1,7 @@
 import dataclasses
-from src import versions 
+from src import entities 
 
 @dataclasses.dataclass
 class AllVersionDto:
-    current: versions.VersionSymbol
-    awiable: list[versions.VersionSymbol]
+    current: entities.VersionSymbol
+    awiable: list[entities.VersionSymbol]
