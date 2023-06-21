@@ -1,10 +1,11 @@
 from fastapi import FastAPI, UploadFile
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 from fastapi.responses import FileResponse
 
 from src.builds_storage import BuildsStorage
 from src.upload.service import UploadService
 from src.versoins_usecase.service import VersionsUsecase
+from src.authentication.admin import admin_required
 
 from src import entities
 from src import errors
@@ -16,16 +17,24 @@ upload_service = UploadService(builds_storage, "versions")
 version_usecase = VersionsUsecase(builds_storage)
 
 @app.post("/upload_files")
-async def on_upload_files(version: str, description: str, file: UploadFile) -> entities.Build:
+async def on_upload_files(
+    version: str,
+    file: UploadFile,
+    description: str="",
+    api_key: str = Depends(admin_required)
+) -> entities.Build:
     _version = entities.Version.from_string(version)
-    build = entities.Build(str(version), f"versions/{file.filename}")
+    build = entities.Build(str(version), f"versions/{file.filename}", description)
     
     await upload_service.add(file, _version)
 
     return build
 
 @app.post("/set_current_version")
-async def on_set_current_version(version: entities.VersionSymbol):
+async def on_set_current_version(
+        version: entities.VersionSymbol,
+        api_key: str = Depends(admin_required)
+    ):
     try:
         version_usecase.set_current_version(version)
     
@@ -33,7 +42,7 @@ async def on_set_current_version(version: entities.VersionSymbol):
         raise HTTPException(status_code=400, detail=f"{error.version} not found")
 
 @app.get("/get_versions")
-async def on_get_current_version() -> dto.AllVersionDto:
+async def on_get_current_version(api_key: str = Depends(admin_required)) -> dto.AllVersionDto:
     return dto.AllVersionDto(
         current=version_usecase.get_current_version(),
         awiable=version_usecase.get_sorted_versions()
