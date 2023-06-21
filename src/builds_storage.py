@@ -21,9 +21,13 @@ class BuildsStorage:
         if not os.path.exists(self._filename):
             self._create_new_file()
     
-    def create(self, version: entities.Build):
+    def create(self, build: entities.Build):
         builds = self.get_all()
-        builds.append(version)
+
+        if any(_build.version == build.version for _build in builds):
+            raise errors.BuildAlreadyExistsError(build.version)
+
+        builds.append(build)
         self._save_builds(builds)
     
     def get_all(self) -> list[entities.Build]:

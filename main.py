@@ -1,3 +1,4 @@
+# uvicorn main:app --log-config log.ini
 from fastapi import FastAPI, UploadFile
 from fastapi import HTTPException, Depends
 from fastapi.responses import FileResponse
@@ -10,6 +11,15 @@ from src.authentication.admin import admin_required
 from src import entities
 from src import errors
 from src import dto
+
+import logging
+
+logging.basicConfig(
+    filename="main.log",
+    filemode="w",
+    encoding="utf-8",
+    level=logging.DEBUG
+)
 
 app = FastAPI()
 builds_storage = BuildsStorage("versions.json")
@@ -26,8 +36,12 @@ async def on_upload_files(
     _version = entities.Version.from_string(version)
     build = entities.Build(str(version), f"versions/{file.filename}", description)
     
-    await upload_service.add(file, _version)
+    try:
+        await upload_service.add(file, _version)
 
+    except errors.BuildAlreadyExistsError as error:
+        raise HTTPException(status_code=400, detail=f"{error.version} already exist")
+    
     return build
 
 @app.post("/set_current_version")
