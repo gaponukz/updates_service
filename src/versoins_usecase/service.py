@@ -24,7 +24,7 @@ class VersionsUsecase:
         
         return str(latest)
     
-    def get_current_version(self) -> entities.VersionSymbol | None:
+    def get_current_version(self) -> typing.Optional[entities.VersionSymbol]:
         current_build = [build for build in self._provider.get_all() if build.is_current]
 
         if not current_build:

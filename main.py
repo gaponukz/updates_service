@@ -16,7 +16,7 @@ upload_service = UploadService(builds_storage, "versions")
 version_usecase = VersionsUsecase(builds_storage)
 
 @app.post("/upload_files")
-async def on_upload_files(version: str, file: UploadFile) -> entities.Build:
+async def on_upload_files(version: str, description: str, file: UploadFile) -> entities.Build:
     _version = entities.Version.from_string(version)
     build = entities.Build(str(version), f"versions/{file.filename}")
     
@@ -40,5 +40,12 @@ async def on_get_current_version() -> dto.AllVersionDto:
     )
 
 @app.get("/download")
-async def root(version: str) -> FileResponse:
-    return FileResponse(f"path/to/{version}.zip", media_type="application/zip", filename="main.zip")
+async def root() -> FileResponse:
+    current = version_usecase.get_current_version()
+
+    if current is None:
+        raise HTTPException(status_code=500, detail=f"no selected version")
+    
+    build = builds_storage.get_by_version(current)
+
+    return FileResponse(build.file_path, media_type="application/zip", filename="main.zip")
