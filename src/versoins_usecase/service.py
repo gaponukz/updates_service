@@ -3,7 +3,9 @@ from src import entities
 
 class BuildsProvider(typing.Protocol):
     def get_all(self) -> list[entities.Build]: ...
-
+    def get_by_version(self, version: entities.VersionSymbol) -> entities.Build: ...
+    def create(self, version: entities.Build): ...
+    def delete_by_version(self, version: entities.VersionSymbol): ...
 
 class VersionsUsecase:
     def __init__(self, provider: BuildsProvider):
@@ -22,13 +24,19 @@ class VersionsUsecase:
         
         return str(latest)
     
-    def get_current_version(self) -> entities.VersionSymbol:
-        current_build = [build for build in self._provider.get_all() if build.latest]
+    def get_current_version(self) -> entities.VersionSymbol | None:
+        current_build = [build for build in self._provider.get_all() if build.is_current]
 
         if not current_build:
-            raise ValueError("The are no current version available")
+            return None
         
         return current_build[0].version
+
+    def set_current_version(self, version: entities.VersionSymbol):
+        build = self._provider.get_by_version(version)
+        build.is_current = True
+        self._provider.delete_by_version(version)
+        self._provider.create(build)
 
     def get_all_versions(self) -> list[entities.VersionSymbol]:
         return [build.version for build in self._provider.get_all()]

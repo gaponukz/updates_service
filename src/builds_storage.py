@@ -11,7 +11,7 @@ class _JsonBuild(typing.TypedDict):
     version: entities.VersionSymbol
     file_path: str
     description: str
-    latest: bool
+    is_current: bool
     created_at: str
 
 class BuildsStorage:
@@ -31,7 +31,7 @@ class BuildsStorage:
     
     def get_by_version(self, version: entities.VersionSymbol) -> entities.Build:
         builds = self._get_all_from_file()
-        filtered = list(filter(lambda b: b.version != version, builds))
+        filtered = list(filter(lambda b: b.version == version, builds))
         
         if not filtered:
             raise errors.BuildNotFoundError(version)

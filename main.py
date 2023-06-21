@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile
+from fastapi import HTTPException
 from fastapi.responses import FileResponse
 
 from src.builds_storage import BuildsStorage
@@ -6,6 +7,7 @@ from src.upload.service import UploadService
 from src.versoins_usecase.service import VersionsUsecase
 
 from src import entities
+from src import errors
 from src import dto
 
 app = FastAPI()
@@ -21,6 +23,14 @@ async def on_upload_files(version: str, file: UploadFile) -> entities.Build:
     await upload_service.add(file, _version)
 
     return build
+
+@app.post("/set_current_version")
+async def on_set_current_version(version: entities.VersionSymbol):
+    try:
+        version_usecase.set_current_version(version)
+    
+    except errors.BuildNotFoundError as error:
+        raise HTTPException(status_code=400, detail=f"{error.version} not found")
 
 @app.get("/get_versions")
 async def on_get_current_version() -> dto.AllVersionDto:
