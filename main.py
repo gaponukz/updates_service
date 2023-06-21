@@ -1,13 +1,18 @@
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import FileResponse
-from src.verion_storage import BuildsStorage
+
+from src.builds_storage import BuildsStorage
 from src.upload.service import UploadService
+from src.versoins_usecase.service import VersionsUsecase
+from src.utils import BuildToVersionAdapter
+
 from src import entities
 from src import dto
 
 app = FastAPI()
-builds_storage = BuildsStorage("versions.txt")
+builds_storage = BuildsStorage("versions.json")
 upload_service = UploadService(builds_storage, "versions")
+version_usecase = VersionsUsecase(BuildToVersionAdapter(builds_storage))
 
 @app.post("/upload_files")
 async def on_upload_files(version: str, file: UploadFile) -> entities.Build:
@@ -20,7 +25,10 @@ async def on_upload_files(version: str, file: UploadFile) -> entities.Build:
 
 @app.get("/get_versions")
 async def on_get_current_version() -> dto.AllVersionDto:
-    return dto.AllVersionDto("0.0.1", [])
+    return dto.AllVersionDto(
+        current=version_usecase.get_current_version(),
+        awiable=version_usecase.get_sorted_versions()
+    )
 
 @app.get("/download")
 async def root(version: str) -> FileResponse:
