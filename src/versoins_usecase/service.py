@@ -1,13 +1,12 @@
 import typing
 from src import entities
 
-class VersionsProvider(typing.Protocol):
-    def get_current_version(self) -> entities.VersionSymbol | None: ...
-    def get_all_versions(self) -> list[entities.VersionSymbol]: ...
+class BuildsProvider(typing.Protocol):
+    def get_all(self) -> list[entities.Build]: ...
 
 
 class VersionsUsecase:
-    def __init__(self, provider: VersionsProvider):
+    def __init__(self, provider: BuildsProvider):
         self._provider = provider
     
     def get_sorted_versions(self, reverse:bool=False) -> list[entities.VersionSymbol]:
@@ -24,13 +23,12 @@ class VersionsUsecase:
         return str(latest)
     
     def get_current_version(self) -> entities.VersionSymbol:
-        version = self._provider.get_current_version()
+        current_build = [build for build in self._provider.get_all() if build.latest]
 
-        if version is None:
-            raise ValueError("Provided current version is not available")
+        if not current_build:
+            raise ValueError("The are no current version available")
         
-        return version
+        return current_build[0].version
 
     def get_all_versions(self) -> list[entities.VersionSymbol]:
-        return self._provider.get_all_versions()
-    
+        return [build.version for build in self._provider.get_all()]

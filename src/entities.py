@@ -7,6 +7,8 @@ VersionSymbol = str
 class Build:
     version: VersionSymbol
     file_path: str
+    description: str = ""
+    latest: bool = False
     created_at: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
 
 @dataclasses.dataclass

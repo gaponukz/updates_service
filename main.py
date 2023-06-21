@@ -4,7 +4,6 @@ from fastapi.responses import FileResponse
 from src.builds_storage import BuildsStorage
 from src.upload.service import UploadService
 from src.versoins_usecase.service import VersionsUsecase
-from src.utils import BuildToVersionAdapter
 
 from src import entities
 from src import dto
@@ -12,7 +11,7 @@ from src import dto
 app = FastAPI()
 builds_storage = BuildsStorage("versions.json")
 upload_service = UploadService(builds_storage, "versions")
-version_usecase = VersionsUsecase(BuildToVersionAdapter(builds_storage))
+version_usecase = VersionsUsecase(builds_storage)
 
 @app.post("/upload_files")
 async def on_upload_files(version: str, file: UploadFile) -> entities.Build:

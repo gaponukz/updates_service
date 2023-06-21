@@ -1,8 +1,18 @@
 import os
 import json
+import typing
+import dataclasses
 import datetime
 
 from src import entities
+from src import errors
+
+class _JsonBuild(typing.TypedDict):
+    version: entities.VersionSymbol
+    file_path: str
+    description: str
+    latest: bool
+    created_at: str
 
 class BuildsStorage:
     def __init__(self, filename: str):
@@ -17,53 +27,46 @@ class BuildsStorage:
         self._save_builds(builds)
     
     def get_all(self) -> list[entities.Build]:
-        with open(self._filename, 'r') as file:
-            data = json.load(file)
-            builds_data = data.get('all', [])
-            builds = [entities.Build(
-                version=build['version'],
-                file_path=build['file_path'],
-                created_at=datetime.datetime.fromisoformat(build['created_at']).replace(tzinfo=datetime.timezone.utc)
-            ) for build in builds_data]
-
-            return builds
+        return self._get_all_from_file()
     
-    def get_current_version(self) -> entities.VersionSymbol | None:
-        with open(self._filename, 'r') as file:
-            data = json.load(file)
-            return data.get('current')
-
-    def set_current_version(self, version: str):
-        with open(self._filename, 'r+') as file:
-            data = json.load(file)
-            data['current'] = version
-            file.seek(0)
-            json.dump(data, file, indent=4)
-            file.truncate()
+    def get_by_version(self, version: entities.VersionSymbol) -> entities.Build:
+        builds = self._get_all_from_file()
+        filtered = list(filter(lambda b: b.version != version, builds))
         
-    def delete_by_symbol(self, version: str):
-        builds = self.get_all()
-        builds = [build for build in builds if build.version != version]
-        self._save_builds(builds)
+        if not filtered:
+            raise errors.BuildNotFoundError(version)
+        
+        return filtered[0]
+            
+    def delete_by_version(self, version: entities.VersionSymbol):
+        builds = self._get_all_from_file()
+        self._save_builds(list(filter(lambda b: b.version != version, builds)))
+    
+    def _build_to_json(self, build: entities.Build) -> _JsonBuild:
+        data = dataclasses.asdict(build)
+        data['created_at'] = data['created_at'].isoformat()
+        dumped: _JsonBuild = typing.cast(_JsonBuild, data)
+
+        return dumped
+    
+    def _build_from_json(self, build: _JsonBuild) -> entities.Build:
+        new_build: dict = typing.cast(dict, build.copy())
+        new_build['created_at'] = datetime.datetime.fromisoformat(build['created_at'])\
+            .replace(tzinfo=datetime.timezone.utc)
+
+        return entities.Build(**new_build)
     
     def _save_builds(self, builds: list[entities.Build]):
-        builds_data = [
-            {'version': build.version,
-             'file_path': build.file_path,
-             'created_at': build.created_at.isoformat()
-        } for build in builds]
+        with open(self._filename, 'w', encoding='utf-8') as out:
+            dumped_data = [self._build_to_json(build) for build in builds]
+            json.dump(dumped_data, out, indent=4)
+    
+    def _get_all_from_file(self) -> list[entities.Build]:
+        with open(self._filename, 'r', encoding='utf-8') as out:
+            builds: list[_JsonBuild] = json.load(out)
 
-        with open(self._filename, 'r+') as file:
-            data = json.load(file)
-            data['all'] = builds_data
-            file.seek(0)
-            json.dump(data, file, indent=4)
-            file.truncate()
-
-    def _create_new_file(self):
-        content = {
-            "current": None,
-            "all": []
-        }
+            return [self._build_from_json(build) for build in builds]
+        
+    def _create_new_file(self) -> None:
         with open(self._filename, 'w') as file:
-            json.dump(content, file, indent=4)
+            json.dump([], file, indent=4)
