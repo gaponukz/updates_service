@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile
 from fastapi import HTTPException, Depends
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.builds_storage import BuildsStorage
 from src.upload.service import UploadService
@@ -24,6 +25,14 @@ app = FastAPI()
 builds_storage = BuildsStorage("database/versions.json")
 upload_service = UploadService(builds_storage, "database/versions")
 version_usecase = VersionsUsecase(builds_storage)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_origin_regex=r"http://localhost:?[0-9]*$"
+)
 
 @app.post("/upload_files")
 async def on_upload_files(
