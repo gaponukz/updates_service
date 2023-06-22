@@ -12,15 +12,6 @@ from src import entities
 from src import errors
 from src import dto
 
-import logging
-
-logging.basicConfig(
-    filename="main.log",
-    filemode="w",
-    encoding="utf-8",
-    level=logging.DEBUG
-)
-
 app = FastAPI()
 builds_storage = BuildsStorage("database/versions.json")
 upload_service = UploadService(builds_storage, "database/versions")
