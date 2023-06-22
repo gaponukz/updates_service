@@ -6,7 +6,7 @@ ADMIN_PASSWORD_KEY=12345
 ```
  + Create `database` folder with that files:
 ```
-root
+database
 │   versions.json
 │   
 └───versions
