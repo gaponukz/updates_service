@@ -15,6 +15,10 @@ root
         ...
         buildn.zip
 ```
+Where `versions.json` is empty list:
+```json
+[]
+```
 ## Deploying locally
 Clone this git repo
 ```bash
