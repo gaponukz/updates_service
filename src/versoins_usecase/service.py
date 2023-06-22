@@ -1,5 +1,6 @@
 import typing
 from src import entities
+from src import errors
 
 class BuildsProvider(typing.Protocol):
     def get_all(self) -> list[entities.Build]: ...
@@ -33,10 +34,29 @@ class VersionsUsecase:
         return current_build[0].version
 
     def set_current_version(self, version: entities.VersionSymbol):
-        build = self._provider.get_by_version(version)
-        build.is_current = True
-        self._provider.delete_by_version(version)
-        self._provider.create(build)
+        old = None
+        new = None
+        for build in self._provider.get_all():
+            if not (old is None or new is None):
+                break
+
+            if build.is_current:
+                build.is_current = False
+                old = build
+            
+            if build.version == version:
+                build.is_current = True
+                new = build
+        
+        if new is None:
+            raise errors.BuildNotFoundError(version)
+
+        self._provider.delete_by_version(new.version)
+        self._provider.create(new)
+
+        if old is not None:
+            self._provider.delete_by_version(old.version)
+            self._provider.create(old)
 
     def get_all_versions(self) -> list[entities.VersionSymbol]:
         return [build.version for build in self._provider.get_all()]

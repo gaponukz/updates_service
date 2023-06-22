@@ -17,14 +17,9 @@ class UploadService:
         self.storage = storage
         self._folder_path = folder_path
     
-    async def add(self, file: File, version: entities.Version):
-        file_path = f"{self._folder_path}/{file.filename}"
-
-        async with aiofiles.open(file_path, 'wb') as out_file:
+    async def add(self, file: File, build: entities.Build):
+        async with aiofiles.open(f"{self._folder_path}/{file.filename}", 'wb') as out_file:
             content = await file.read()
             await out_file.write(content)
         
-        self.storage.create(entities.Build(
-            version=str(version),
-            file_path=file_path
-        ))
+        self.storage.create(build)

@@ -1,4 +1,5 @@
-from fastapi import FastAPI, UploadFile
+from typing import Annotated
+from fastapi import FastAPI, UploadFile, Form
 from fastapi import HTTPException, Depends
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,16 +28,15 @@ app.add_middleware(
 
 @app.post("/upload_files")
 async def on_upload_files(
-    version: str,
     file: UploadFile,
-    description: str="",
+    version: Annotated[str, Form()],
+    description: Annotated[str, Form()]="",
     api_key: str = Depends(admin_required)
 ) -> entities.Build:
-    _version = entities.Version.from_string(version)
-    build = entities.Build(str(version), f"database/versions/{file.filename}", description)
+    build = entities.Build(version, f"database/versions/{file.filename}", description)
     
     try:
-        await upload_service.add(file, _version)
+        await upload_service.add(file, build)
 
     except errors.BuildAlreadyExistsError as error:
         raise HTTPException(status_code=400, detail=f"{error.version} already exist")
@@ -50,6 +50,17 @@ async def on_set_current_version(
     ):
     try:
         version_usecase.set_current_version(version)
+    
+    except errors.BuildNotFoundError as error:
+        raise HTTPException(status_code=400, detail=f"{error.version} not found")
+
+@app.get('/get_build_info')
+async def on_get_build_info(
+        version: entities.VersionSymbol,
+        api_key: str = Depends(admin_required)
+    ) -> entities.Build:
+    try:
+        return builds_storage.get_by_version(version)
     
     except errors.BuildNotFoundError as error:
         raise HTTPException(status_code=400, detail=f"{error.version} not found")
