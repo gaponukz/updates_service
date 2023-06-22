@@ -1,4 +1,5 @@
 # uvicorn main:app --log-config log.ini
+# docker run -d -p 8000:8000 -v database:/app/database updates-service
 from fastapi import FastAPI, UploadFile
 from fastapi import HTTPException, Depends
 from fastapi.responses import FileResponse
@@ -22,8 +23,8 @@ logging.basicConfig(
 )
 
 app = FastAPI()
-builds_storage = BuildsStorage("versions.json")
-upload_service = UploadService(builds_storage, "versions")
+builds_storage = BuildsStorage("database/versions.json")
+upload_service = UploadService(builds_storage, "database/versions")
 version_usecase = VersionsUsecase(builds_storage)
 
 @app.post("/upload_files")
@@ -34,7 +35,7 @@ async def on_upload_files(
     api_key: str = Depends(admin_required)
 ) -> entities.Build:
     _version = entities.Version.from_string(version)
-    build = entities.Build(str(version), f"versions/{file.filename}", description)
+    build = entities.Build(str(version), f"database/versions/{file.filename}", description)
     
     try:
         await upload_service.add(file, _version)
