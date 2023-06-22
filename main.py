@@ -1,5 +1,3 @@
-# uvicorn main:app --log-config log.ini
-# docker run -d -p 8000:8000 -v database:/app/database updates-service
 from fastapi import FastAPI, UploadFile
 from fastapi import HTTPException, Depends
 from fastapi.responses import FileResponse
