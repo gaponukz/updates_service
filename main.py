@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.builds_storage import BuildsStorage
 from src.upload.service import UploadService
+from src.delete.service import DeleteService
 from src.versoins_usecase.service import VersionsUsecase
 from src.authentication.admin import admin_required
 
@@ -16,6 +17,7 @@ from src import dto
 app = FastAPI()
 builds_storage = BuildsStorage("database/versions.json")
 upload_service = UploadService(builds_storage, "database/versions")
+delete_service = DeleteService(builds_storage)
 version_usecase = VersionsUsecase(builds_storage)
 
 app.add_middleware(
@@ -64,6 +66,13 @@ async def on_get_build_info(
     
     except errors.BuildNotFoundError as error:
         raise HTTPException(status_code=400, detail=f"{error.version} not found")
+
+@app.delete('/delete_build')
+async def on_delete_build(
+        version: entities.VersionSymbol,
+        api_key: str = Depends(admin_required)
+    ):
+    delete_service.delete(version)
 
 @app.get("/get_versions")
 async def on_get_current_version(api_key: str = Depends(admin_required)) -> dto.AllVersionDto:
