@@ -25,7 +25,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_origin_regex=r"http://localhost:?[0-9]*$"
+    allow_origins=["http://localhost:3000"],
 )
 
 @app.post("/versions/upload_files")
