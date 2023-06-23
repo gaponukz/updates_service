@@ -28,7 +28,7 @@ app.add_middleware(
     allow_origin_regex=r"http://localhost:?[0-9]*$"
 )
 
-@app.post("/upload_files")
+@app.post("/versions/upload_files")
 async def on_upload_files(
     file: UploadFile,
     version: Annotated[str, Form()],
@@ -45,7 +45,7 @@ async def on_upload_files(
     
     return build
 
-@app.post("/set_current_version")
+@app.post("/versions/set_current_version")
 async def on_set_current_version(
         version: entities.VersionSymbol,
         api_key: str = Depends(admin_required)
@@ -56,7 +56,7 @@ async def on_set_current_version(
     except errors.BuildNotFoundError as error:
         raise HTTPException(status_code=400, detail=f"{error.version} not found")
 
-@app.get('/get_build_info')
+@app.get('/versions/get_build_info')
 async def on_get_build_info(
         version: entities.VersionSymbol,
         api_key: str = Depends(admin_required)
@@ -67,21 +67,21 @@ async def on_get_build_info(
     except errors.BuildNotFoundError as error:
         raise HTTPException(status_code=400, detail=f"{error.version} not found")
 
-@app.delete('/delete_build')
+@app.delete('/versions/delete_build')
 async def on_delete_build(
         version: entities.VersionSymbol,
         api_key: str = Depends(admin_required)
     ):
     delete_service.delete(version)
 
-@app.get("/get_versions")
+@app.get("/versions/get_versions")
 async def on_get_current_version(api_key: str = Depends(admin_required)) -> dto.AllVersionDto:
     return dto.AllVersionDto(
         current=version_usecase.get_current_version(),
         awiable=version_usecase.get_sorted_versions()
     )
 
-@app.get("/download")
+@app.get("/versions/download")
 async def root() -> FileResponse:
     current = version_usecase.get_current_version()
 
