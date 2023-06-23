@@ -33,6 +33,16 @@ class Version:
             raise ValueError("Invalid version format")
             
         return cls(int(version[0]), int(version[1]), int(version[2]))
-
+        
     def __str__(self) -> VersionSymbol:
         return f"{self.major}.{self.minor}.{self.patch}"
+
+class CompareAbleVersion(Version):
+    def is_bigger_than(self, other) -> bool:
+        if not isinstance(other, Version):
+            raise TypeError("Comparison object must be of type Version")
+        
+        first = (self.major, self.minor, self.patch)
+        second = (other.major, other.minor, other.patch)
+
+        return first > second

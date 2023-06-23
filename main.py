@@ -82,12 +82,18 @@ async def on_get_current_version(api_key: str = Depends(admin_required)) -> dto.
     )
 
 @app.get("/versions/download")
-async def root() -> FileResponse:
+async def root(current_user_version: entities.VersionSymbol) -> FileResponse:
     current = version_usecase.get_current_version()
 
     if current is None:
         raise HTTPException(status_code=500, detail=f"no selected version")
     
-    build = builds_storage.get_by_version(current)
+    user_version = entities.CompareAbleVersion.from_string(current_user_version)
+    current_version = entities.CompareAbleVersion.from_string(current)
 
-    return FileResponse(build.file_path, media_type="application/zip", filename="main.zip")
+    if current_version.is_bigger_than(user_version):
+        build = builds_storage.get_by_version(current)
+
+        return FileResponse(build.file_path, media_type="application/zip", filename=f"main{current}.zip")
+
+    raise HTTPException(status_code=304, detail=f"you have the latest")
