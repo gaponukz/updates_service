@@ -1,6 +1,6 @@
 import os
 import typing
-from src import entities
+from src.domain import entities
 
 class DeleteAbleStorage(typing.Protocol):
     def get_by_version(self, version: entities.VersionSymbol) -> entities.Build: ...

@@ -4,8 +4,8 @@ import typing
 import dataclasses
 import datetime
 
-from src import entities
-from src import errors
+from src.domain import entities
+from src.domain import errors
 
 class _JsonBuild(typing.TypedDict):
     version: entities.VersionSymbol

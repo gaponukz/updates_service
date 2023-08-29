@@ -1,6 +1,6 @@
 import typing
-from src import entities
-from src import errors
+from src.domain import entities
+from src.domain import errors
 
 class BuildsProvider(typing.Protocol):
     def get_all(self) -> list[entities.Build]: ...

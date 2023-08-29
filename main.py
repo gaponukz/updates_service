@@ -4,15 +4,15 @@ from fastapi import HTTPException, Depends
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.builds_storage import BuildsStorage
+from src.infrastructure.builds_storage import BuildsStorage
 from src.upload.service import UploadService
 from src.delete.service import DeleteService
-from src.versoins_usecase.service import VersionsUsecase
+from src.application.usecases.get.service import VersionsUsecase
 from src.authentication.admin import admin_required
 
-from src import entities
-from src import errors
-from src import dto
+from src.domain import entities
+from src.domain import errors
+from src.application import dto
 
 app = FastAPI()
 builds_storage = BuildsStorage("database/versions.json")

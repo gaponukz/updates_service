@@ -1,7 +1,7 @@
 import typing
 import aiofiles
 
-from src import entities
+from src.domain import entities
 
 class CreateAbleStorage(typing.Protocol):
     def create(self, build: entities.Build): ...
