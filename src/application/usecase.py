@@ -1,3 +1,4 @@
+import abc
 import typing
 import aiofiles
 from src.domain import entities
@@ -15,7 +16,32 @@ class File(typing.Protocol):
     @property
     def filename(self) -> typing.Optional[str]: ...
 
-class VersionsUsecase:
+class IVersionsUsecase(abc.ABC):
+    @abc.abstractmethod
+    def upload(self, file: File, build: entities.Build) -> typing.Coroutine[object, object, None]: ...
+    
+    @abc.abstractmethod
+    def delete(self, version: entities.VersionSymbol): ...
+    
+    @abc.abstractmethod
+    def get_sorted_versions(self, reverse:bool=False) -> list[entities.VersionSymbol]: ...
+    
+    @abc.abstractmethod
+    def get_latest(self) -> entities.VersionSymbol: ...
+    
+    @abc.abstractmethod
+    def get_current_version(self) -> typing.Optional[entities.VersionSymbol]: ...
+    
+    @abc.abstractmethod
+    def set_current_version(self, version: entities.VersionSymbol): ...
+    
+    @abc.abstractmethod
+    def get_all_versions(self) -> list[entities.VersionSymbol]: ...
+
+    @abc.abstractmethod
+    def get_by_version(self, version: entities.VersionSymbol) -> entities.Build: ...
+
+class VersionsUsecase(IVersionsUsecase):
     def __init__(self, provider: BuildsProvider, folder_path: str):
         self._provider = provider
         self._folder_path = folder_path
@@ -78,3 +104,6 @@ class VersionsUsecase:
 
     def get_all_versions(self) -> list[entities.VersionSymbol]:
         return [build.version for build in self._provider.get_all()]
+
+    def get_by_version(self, version: entities.VersionSymbol) -> entities.Build:
+        return self._provider.get_by_version(version)
