@@ -4,9 +4,7 @@ from fastapi import HTTPException, Depends
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.application.usecases.upload.service import UploadService
-from src.application.usecases.delete.service import DeleteService
-from src.application.usecases.get.service import VersionsUsecase
+from src.application.usecase import VersionsUsecase
 from src.infrastructure.builds_storage import BuildsStorage
 from src.infrastructure.authentication.admin import admin_required
 
@@ -16,9 +14,7 @@ from src.application import dto
 
 app = FastAPI()
 builds_storage = BuildsStorage("database/versions.json")
-upload_service = UploadService(builds_storage, "database/versions")
-delete_service = DeleteService(builds_storage)
-version_usecase = VersionsUsecase(builds_storage)
+version_usecase = VersionsUsecase(builds_storage, "database/versions")
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,7 +34,7 @@ async def on_upload_files(
     build = entities.Build(version, f"database/versions/{file.filename}", description)
     
     try:
-        await upload_service.add(file, build)
+        await version_usecase.upload(file, build)
 
     except errors.BuildAlreadyExistsError as error:
         raise HTTPException(status_code=400, detail=f"{error.version} already exist")
@@ -72,7 +68,7 @@ async def on_delete_build(
         version: entities.VersionSymbol,
         api_key: str = Depends(admin_required)
     ):
-    delete_service.delete(version)
+    version_usecase.delete(version)
 
 @app.get("/versions/get_versions")
 async def on_get_current_version(api_key: str = Depends(admin_required)) -> dto.AllVersionDto:

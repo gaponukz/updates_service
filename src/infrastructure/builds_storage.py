@@ -43,8 +43,24 @@ class BuildsStorage:
         return filtered[0]
             
     def delete_by_version(self, version: entities.VersionSymbol):
+        build_to_delete: None | entities.Build
         builds = self._get_all_from_file()
-        self._save_builds(list(filter(lambda b: b.version != version, builds)))
+        builds_to_save: list[entities.Build] = []
+
+        for build in builds:
+            if build.version == version:
+                build_to_delete = build
+            
+            else:
+                builds_to_save.append(build)
+        
+        if not build_to_delete:
+            raise errors.BuildNotFoundError(version)
+
+        if os.path.isfile(build_to_delete.file_path):
+            os.remove(build_to_delete.file_path)
+
+        self._save_builds(builds_to_save)
     
     def _build_to_json(self, build: entities.Build) -> _JsonBuild:
         data = dataclasses.asdict(build)
