@@ -1,6 +1,6 @@
 import typing
 import dataclasses
-from src import entities 
+from src.domain import entities 
 
 @dataclasses.dataclass
 class AllVersionDto:

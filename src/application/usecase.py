@@ -1,6 +1,8 @@
+import abc
 import typing
-from src import entities
-from src import errors
+import aiofiles
+from src.domain import entities
+from src.domain import errors
 
 class BuildsProvider(typing.Protocol):
     def get_all(self) -> list[entities.Build]: ...
@@ -8,9 +10,51 @@ class BuildsProvider(typing.Protocol):
     def create(self, version: entities.Build): ...
     def delete_by_version(self, version: entities.VersionSymbol): ...
 
-class VersionsUsecase:
-    def __init__(self, provider: BuildsProvider):
+class File(typing.Protocol):
+    def read(self) -> typing.Coroutine[object, object, bytes]: ...
+    def close(self) -> typing.Coroutine[object, object, None]: ...
+    @property
+    def filename(self) -> typing.Optional[str]: ...
+
+class IVersionsUsecase(abc.ABC):
+    @abc.abstractmethod
+    def upload(self, file: File, build: entities.Build) -> typing.Coroutine[object, object, None]: ...
+    
+    @abc.abstractmethod
+    def delete(self, version: entities.VersionSymbol): ...
+    
+    @abc.abstractmethod
+    def get_sorted_versions(self, reverse:bool=False) -> list[entities.VersionSymbol]: ...
+    
+    @abc.abstractmethod
+    def get_latest(self) -> entities.VersionSymbol: ...
+    
+    @abc.abstractmethod
+    def get_current_version(self) -> typing.Optional[entities.VersionSymbol]: ...
+    
+    @abc.abstractmethod
+    def set_current_version(self, version: entities.VersionSymbol): ...
+    
+    @abc.abstractmethod
+    def get_all_versions(self) -> list[entities.VersionSymbol]: ...
+
+    @abc.abstractmethod
+    def get_by_version(self, version: entities.VersionSymbol) -> entities.Build: ...
+
+class VersionsUsecase(IVersionsUsecase):
+    def __init__(self, provider: BuildsProvider, folder_path: str):
         self._provider = provider
+        self._folder_path = folder_path
+
+    async def upload(self, file: File, build: entities.Build):
+        async with aiofiles.open(f"{self._folder_path}/{file.filename}", 'wb') as out_file:
+            content = await file.read()
+            await out_file.write(content)
+        
+        self._provider.create(build)
+    
+    def delete(self, version: entities.VersionSymbol):
+        self._provider.delete_by_version(version)
     
     def get_sorted_versions(self, reverse:bool=False) -> list[entities.VersionSymbol]:
         versions = list(map(entities.Version.from_string, self.get_all_versions()))
@@ -60,3 +104,6 @@ class VersionsUsecase:
 
     def get_all_versions(self) -> list[entities.VersionSymbol]:
         return [build.version for build in self._provider.get_all()]
+
+    def get_by_version(self, version: entities.VersionSymbol) -> entities.Build:
+        return self._provider.get_by_version(version)
