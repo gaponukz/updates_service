@@ -4,11 +4,11 @@ from fastapi import HTTPException, Depends
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.infrastructure.builds_storage import BuildsStorage
-from src.upload.service import UploadService
-from src.delete.service import DeleteService
+from src.application.usecases.upload.service import UploadService
+from src.application.usecases.delete.service import DeleteService
 from src.application.usecases.get.service import VersionsUsecase
-from src.authentication.admin import admin_required
+from src.infrastructure.builds_storage import BuildsStorage
+from src.infrastructure.authentication.admin import admin_required
 
 from src.domain import entities
 from src.domain import errors
